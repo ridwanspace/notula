@@ -41,6 +41,9 @@ coverage-full: ## Overall gate: 85% across unit+integration
 run: ## Run the API + UI on :8000 (mock provider unless NOTULA_PROVIDER=live)
 	cd backend && uv run uvicorn notula.main:build_app --factory --port 8000
 
+web: ## Run the Next.js frontend (needs backend on :8000)
+	cd frontend && pnpm dev
+
 demo: ## End-to-end offline demo: submit sample audio, stream progress, print summary
 	cd backend && uv run python scripts/demo.py
 

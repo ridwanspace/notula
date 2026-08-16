@@ -150,9 +150,20 @@ make eval          # offline eval suite
 
 Live mode: copy `.env.example` to `.env`, add `GEMINI_API_KEY` and `DEEPSEEK_API_KEY`, then `NOTULA_PROVIDER=live make run` (or `uv run python scripts/demo.py --live`).
 
+## Frontend
+
+Two UIs, deliberately different:
+
+- **`backend/.../static/index.html`** — a zero-toolchain single-file demo page served by the API itself, so `make run` needs no Node at all.
+- **`frontend/`** — the product UI: Next.js 16 / React 19, Tailwind v4, shadcn primitives, Biome, vitest, and API types generated from the backend's OpenAPI schema (`pnpm generate:api`, committed). Start the backend (`make run`), then `make web` → <http://localhost:3000>.
+
+The design treats a meeting as a *document*, not a dashboard: a reading column beside a metadata rail, a one-hue accent budget, and **provenance tinting** — every AI-authored container (summary, action items) sits on a violet wash with a single "✦ AI-generated · *model* · pass 2" caption naming the model that wrote it (and the repair count when the schema loop had to intervene). Human and machine text never share a surface color.
+
+<p align="center"><img src="assets/app-recap.png" alt="Notula frontend — meeting recap document with provenance-tinted AI panels and measured pipeline rail" width="820"></p>
+<p align="center"><em>The recap document: AI-authored panels tinted with a provenance caption, transcript and player on the human surface, measured per-stage costs in the rail. Mock-provider data shown.</em></p>
+
 ## Roadmap
 
-- [ ] Next.js 16 frontend (SSE streaming UI, generated API types via openapi-typescript) — the static demo page is deliberately zero-toolchain
 - [ ] Meeting-bot capture (Zoom/Meet) and digest delivery
 - [ ] `llm-eval diff` gate in CI once the golden set is large enough to be meaningful
 

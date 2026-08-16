@@ -1,0 +1,112 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * Notula design tokens — meebuddy-derived "meeting-as-document" system.
+ * Accent budget: 1. The AA-pivot violet #6f5ff8 (4.5:1 vs white in both
+ * directions) is CTA fill, link, active state, and AI voice — on WHITE only.
+ * Any accent text on a tinted surface uses the darkened companion #5a4bd8.
+ * Chrome is achromatic: two surfaces, one hairline, a four-step ink ladder.
+ * Single light theme by design.
+ */
+
+@theme inline {
+  /* shadcn primitive mapping */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.75);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: 12px;
+
+  /* Notula semantic tokens */
+  --color-canvas: #ffffff;
+  --color-sunken: #fafafa;
+  --color-ink: #0a0a0a;
+  --color-ink-body: #363636;
+  --color-ink-muted: #686868;
+  --color-ink-faint: #888888; /* UI-level contrast only — never body text */
+  --color-hairline: #ececec;
+  --color-violet: #6f5ff8; /* AA-pivot: fills + accent text on white only */
+  --color-violet-deep: #5a4bd8; /* accent text on tinted surfaces */
+  --color-ai-panel: #f8f5fb; /* AI-authored containers */
+  --color-ai-wash: #f0f2fd; /* AI banners */
+  --color-danger: #d4544a;
+  --color-danger-wash: #fdf2f1;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+:root {
+  --radius: 8px;
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #6f5ff8;
+  --primary-foreground: #ffffff;
+  --secondary: #fafafa;
+  --secondary-foreground: #363636;
+  --muted: #fafafa;
+  --muted-foreground: #686868;
+  --accent: #f0f2fd;
+  --accent-foreground: #5a4bd8;
+  --destructive: #d4544a;
+  --border: #ececec;
+  --input: #ececec;
+  --ring: rgb(111 95 248 / 0.4);
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink-body);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Document prose: tight 18px pitch — the recap reads like a report */
+.doc-prose {
+  font-size: 14px;
+  line-height: 18px;
+  color: var(--color-ink-body);
+}
+
+/* Meebuddy heading bar: document structure promoted to chrome */
+.heading-bar {
+  background: var(--color-sunken);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
