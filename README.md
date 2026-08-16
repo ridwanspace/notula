@@ -6,7 +6,7 @@
 
 Most meeting-notetaker repos are desktop apps that assert quality. This one is a reference backend that **measures itself**: every pipeline stage reports wall time, token usage, and cost computed from the provider's own usage metadata; summary quality is scored by an eval suite ([llm-eval-harness](https://github.com/ridwanspace/llm-eval-harness)) rather than claimed.
 
-<p align="center"><img src="assets/landing.png" alt="Notula demo UI" width="820"></p>
+<p align="center"><img src="assets/app-recap.png" alt="Notula — meeting recap document with provenance-tinted AI panels and the measured pipeline rail (mock-provider data)" width="820"></p>
 
 ## 60-second offline quickstart
 
@@ -71,9 +71,6 @@ flowchart LR
 
 **Long audio.** Files over the inline limit go through Gemini's Files API; recordings longer than 20 minutes are split at silence-snapped boundaries with 15-second overlaps, transcribed per chunk, and merged — duplicate utterances in the overlap are dropped at its midpoint, and generic speaker labels ("Speaker 2") are reconciled across chunks by matching utterance text inside the overlap window.
 
-<p align="center"><img src="assets/pipeline-measured.png" alt="Per-stage measured cost table in the demo UI (mock provider)" width="820"></p>
-<p align="center"><em>The measured pipeline table in the demo UI — stage wall time, tokens from provider usage metadata, cost from the price table. Mock provider shown, hence $0.</em></p>
-
 ## Measured live runs
 
 One 60-second public council-meeting recording through the live pipeline (`gemini-3.5-flash` + `deepseek-v4-flash`), two separate runs of the identical input:
@@ -135,9 +132,6 @@ presentation (FastAPI, SSE, schemas)   infrastructure (SQLite, ffmpeg, Gemini, D
 
 The domain layer imports nothing but the standard library — no Pydantic, no SDKs — and carries a 100% unit-coverage gate in CI (domain + application, branch coverage). Vendor SDKs are quarantined in `infrastructure/providers/`; swapping the summarizer is one adapter.
 
-<p align="center"><img src="assets/summary-cards.png" alt="Summary cards in the demo UI (mock provider)" width="820"></p>
-<p align="center"><em>Result view: TL;DR, key points, decisions, action items with owner chips, synced audio player. Mock-provider output shown.</em></p>
-
 ## Development
 
 ```bash
@@ -159,8 +153,8 @@ Two UIs, deliberately different:
 
 The design treats a meeting as a *document*, not a dashboard: a reading column beside a metadata rail, a one-hue accent budget, and **provenance tinting** — every AI-authored container (summary, action items) sits on a violet wash with a single "✦ AI-generated · *model* · pass 2" caption naming the model that wrote it (and the repair count when the schema loop had to intervene). Human and machine text never share a surface color.
 
-<p align="center"><img src="assets/app-recap.png" alt="Notula frontend — meeting recap document with provenance-tinted AI panels and measured pipeline rail" width="820"></p>
-<p align="center"><em>The recap document: AI-authored panels tinted with a provenance caption, transcript and player on the human surface, measured per-stage costs in the rail. Mock-provider data shown.</em></p>
+<p align="center"><img src="assets/app-upload.png" alt="Notula frontend — app shell with sidebar, provider badge, and the new-meeting upload flow" width="820"></p>
+<p align="center"><em>The app shell: sunken sidebar with recent meetings and the provider badge, upload flow with roster and language controls. The recap document itself is the hero image at the top of this README.</em></p>
 
 ## Roadmap
 

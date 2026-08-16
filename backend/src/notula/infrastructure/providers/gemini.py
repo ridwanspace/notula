@@ -102,7 +102,8 @@ class GeminiTranscriber:
             if uploaded is not None and uploaded.name:
                 try:
                     await self._client.aio.files.delete(name=uploaded.name)
-                except Exception:  # noqa: S110 - best-effort cleanup only
+                # Best-effort cleanup only — a failed delete must not fail the job.
+                except Exception:  # noqa: S110  # nosec B110
                     pass
 
         meta = response.usage_metadata

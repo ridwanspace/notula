@@ -53,7 +53,8 @@ def _fixture_transcript(digest: str) -> Transcript | None:
 
 
 def _synthesize(digest: str, duration_seconds: float) -> Transcript:
-    rng = random.Random(int(digest[:16], 16))  # noqa: S311 - deterministic mock, not crypto
+    # Deterministic mock output, not cryptography.
+    rng = random.Random(int(digest[:16], 16))  # noqa: S311  # nosec B311
     count = max(4, int(duration_seconds // 7))
     utterances: list[Utterance] = []
     clock = 1.0
