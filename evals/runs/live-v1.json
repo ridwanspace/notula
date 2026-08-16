@@ -1,0 +1,401 @@
+{
+  "schema_version": "1",
+  "run_id": "20260816T094805-ca9556",
+  "suite_name": "notula-summarize",
+  "target_name": "notula-summarizer",
+  "target_version": "v1-deepseek",
+  "provider": "openai",
+  "model": "deepseek-v4-flash",
+  "started_at": "2026-08-16T09:48:05.960915Z",
+  "finished_at": "2026-08-16T09:48:26.174398Z",
+  "cases": [
+    {
+      "case_id": "standup-bilingual",
+      "input": "[00:02] Rina: Morning semua, quick standup ya. Kemarin aku selesai integrasi payment webhook, tinggal retry logic.\n[00:14] Dimas: Nice. I finished the export endpoint, but the CSV encoding masih ada bug untuk karakter non-latin.\n[00:29] Rina: Oke. We agreed to move the release from Thursday to next Monday, right? Biar sempat regression test.\n[00:41] Speaker 3: Yes, agreed — Monday. I will prepare the staging environment tonight.\n[00:52] Dimas: Aku akan fix the CSV bug by Friday.\n[01:04] Rina: One thing masih open: apakah kita perlu feature flag untuk payment webhook?\n[01:12] Speaker 3: Let's park that, belum urgent.",
+      "output": "{\n  \"title\": \"Standup: Release Moved to Monday, Payment Webhook and CSV Bug Updates\",\n  \"tldr\": \"During the standup, Rina shared that payment webhook integration is done but retry logic remains, while Dimas finished the export endpoint but found a CSV encoding bug for non-Latin characters. The team agreed to move the release from Thursday to next Monday to allow regression testing. Speaker 3 will prepare staging tonight and Dimas will fix the CSV bug by Friday.\",\n  \"key_points\": [\n    \"Rina completed payment webhook integration; retry logic is still pending.\",\n    \"Dimas finished the export endpoint, but CSV encoding has a bug for non-Latin characters.\",\n    \"The release was moved from Thursday to next Monday to allow regression testing.\",\n    \"Speaker 3 will prepare the staging environment tonight.\",\n    \"Dimas will fix the CSV bug by Friday.\",\n    \"The team parked the question of whether a feature flag is needed for the payment webhook.\"\n  ],\n  \"decisions\": [\n    \"Release moved from Thursday to next Monday.\",\n    \"Feature flag question for payment webhook is parked for now.\"\n  ],\n  \"action_items\": [\n    {\n      \"task\": \"Prepare the staging environment\",\n      \"owner\": \"Speaker 3\",\n      \"due\": \"tonight\"\n    },\n    {\n      \"task\": \"Fix the CSV encoding bug for non-Latin characters\",\n      \"owner\": \"Dimas\",\n      \"due\": \"Friday\"\n    }\n  ],\n  \"open_questions\": [\n    \"Do we need a feature flag for the payment webhook?\"\n  ]\n}",
+      "expected_output": null,
+      "latency_ms": 11209.53209900108,
+      "usage": {
+        "prompt_tokens": 507,
+        "completion_tokens": 1526,
+        "cost_usd": 0.00049826
+      },
+      "scores": [
+        {
+          "scorer": "schema",
+          "scorer_type": "json_schema_valid",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 2.0,
+          "threshold": 1.0,
+          "reasoning": null,
+          "samples": [],
+          "error": null
+        },
+        {
+          "scorer": "faithfulness",
+          "scorer_type": "faithfulness",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 2.0,
+          "threshold": 0.7,
+          "reasoning": "All factual claims in the answer are directly supported by the context, with reasonable paraphrase only.",
+          "samples": [
+            1.0
+          ],
+          "error": null
+        },
+        {
+          "scorer": "relevance",
+          "scorer_type": "relevance",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 0.6,
+          "reasoning": "The ANSWER accurately captures all substantive content from the standup transcript, including Rina's payment webhook update, Dimas's CSV bug, the release date change, Speaker 3's staging task, Dimas's fix timeline, and the parked feature flag question. It organizes the information into relevant sections without omitting key details or adding irrelevant material.",
+          "samples": [
+            1.0
+          ],
+          "error": null
+        },
+        {
+          "scorer": "cost",
+          "scorer_type": "cost_budget",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 1.0,
+          "reasoning": "$0.000498 within $0.010000 budget",
+          "samples": [],
+          "error": null
+        },
+        {
+          "scorer": "latency",
+          "scorer_type": "latency_budget",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 1.0,
+          "reasoning": "11210ms within 120000ms budget",
+          "samples": [],
+          "error": null
+        }
+      ],
+      "tags": [
+        "bilingual",
+        "standup"
+      ],
+      "error": null
+    },
+    {
+      "case_id": "sprint-planning",
+      "input": "[00:03] Ayu: Let's size the search revamp. I think the indexing work alone is eight points.\n[00:15] Bagus: Eight is too high. The mapping already exists, five at most.\n[00:31] Ayu: The reindex job still needs a backfill path though.\n[00:44] Bagus: Fine, six, and we split the backfill into its own ticket.\n[00:55] Ayu: Deal — six points, backfill separate. I will write the backfill ticket after this call.\n[01:10] Citra: Who owns the query-parser cleanup? It has been unassigned for two sprints.\n[01:22] Ayu: Good question, let's raise it in retro.",
+      "output": "{\n  \"title\": \"Search Revamp Sizing Discussion\",\n  \"tldr\": \"Ayu and Bagus negotiated the sizing for the search revamp, agreeing on six points with the backfill split into a separate ticket. Citra raised the unassigned query-parser cleanup, which will be discussed in retro.\",\n  \"key_points\": [\n    \"Ayu initially estimated the indexing work at eight points.\",\n    \"Bagus argued eight was too high because the mapping already exists, suggesting five.\",\n    \"Ayu noted the reindex job still needs a backfill path.\",\n    \"They agreed on six points with the backfill split into its own ticket.\",\n    \"Citra asked who owns the query-parser cleanup, which has been unassigned for two sprints.\",\n    \"They decided to raise the query-parser ownership question in retro.\"\n  ],\n  \"decisions\": [\n    \"The search revamp indexing work is sized at six points.\",\n    \"The backfill will be split into a separate ticket.\"\n  ],\n  \"action_items\": [\n    {\n      \"task\": \"Write the backfill ticket\",\n      \"owner\": \"Ayu\",\n      \"due\": null\n    }\n  ],\n  \"open_questions\": [\n    \"Who owns the query-parser cleanup?\"\n  ]\n}",
+      "expected_output": null,
+      "latency_ms": 3508.0255290013156,
+      "usage": {
+        "prompt_tokens": 495,
+        "completion_tokens": 374,
+        "cost_usd": 0.00017402000000000004
+      },
+      "scores": [
+        {
+          "scorer": "schema",
+          "scorer_type": "json_schema_valid",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 2.0,
+          "threshold": 1.0,
+          "reasoning": null,
+          "samples": [],
+          "error": null
+        },
+        {
+          "scorer": "faithfulness",
+          "scorer_type": "faithfulness",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 2.0,
+          "threshold": 0.7,
+          "reasoning": "Every factual claim in the answer is directly supported by the context. The title, tldr, key points, decisions, action item, and open question all align exactly with the dialogue and provided context. No unsupported or contradicted details.",
+          "samples": [
+            1.0
+          ],
+          "error": null
+        },
+        {
+          "scorer": "relevance",
+          "scorer_type": "relevance",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 0.6,
+          "reasoning": "The answer directly and comprehensively summarizes the entire conversation, capturing the negotiation, final agreement, action item, and open question. It fully addresses the content of the provided transcript.",
+          "samples": [
+            1.0
+          ],
+          "error": null
+        },
+        {
+          "scorer": "cost",
+          "scorer_type": "cost_budget",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 1.0,
+          "reasoning": "$0.000174 within $0.010000 budget",
+          "samples": [],
+          "error": null
+        },
+        {
+          "scorer": "latency",
+          "scorer_type": "latency_budget",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 1.0,
+          "reasoning": "3508ms within 120000ms budget",
+          "samples": [],
+          "error": null
+        }
+      ],
+      "tags": [
+        "planning"
+      ],
+      "error": null
+    },
+    {
+      "case_id": "status-only",
+      "input": "[00:05] Speaker 1: Quick sync — the migration ran overnight without errors.\n[00:16] Speaker 2: Good. Dashboard latency is back to normal after the cache fix last week.\n[00:28] Speaker 1: Support volume is flat, nothing unusual in the queue.\n[00:39] Speaker 2: Same on my side. Nothing else from me.\n[00:44] Speaker 1: Alright, short one today.",
+      "output": "{\n  \"title\": \"Overnight Migration and Dashboard Sync\",\n  \"tldr\": \"The team held a brief sync confirming that the overnight migration completed without errors. Dashboard latency is back to normal following last week's cache fix, and support volume remains flat with no unusual items. No new issues were raised.\",\n  \"key_points\": [\n    \"The migration ran overnight without errors.\",\n    \"Dashboard latency is back to normal after the cache fix last week.\",\n    \"Support volume is flat with nothing unusual in the queue.\"\n  ],\n  \"decisions\": [],\n  \"action_items\": [],\n  \"open_questions\": []\n}",
+      "expected_output": null,
+      "latency_ms": 2671.0863779990177,
+      "usage": {
+        "prompt_tokens": 429,
+        "completion_tokens": 290,
+        "cost_usd": 0.00014125999999999999
+      },
+      "scores": [
+        {
+          "scorer": "schema",
+          "scorer_type": "json_schema_valid",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 2.0,
+          "threshold": 1.0,
+          "reasoning": null,
+          "samples": [],
+          "error": null
+        },
+        {
+          "scorer": "faithfulness",
+          "scorer_type": "faithfulness",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 2.0,
+          "threshold": 0.7,
+          "reasoning": "All factual claims in the answer are directly supported by the context. The migration, latency, support volume, and absence of decisions/action items are explicitly stated. The tldr's 'no new issues were raised' is a faithful summary of 'nothing unusual' and 'nothing else from me', so it is supported.",
+          "samples": [
+            1.0
+          ],
+          "error": null
+        },
+        {
+          "scorer": "relevance",
+          "scorer_type": "relevance",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 0.6,
+          "reasoning": "The answer fully summarizes the meeting transcript, capturing the migration success, latency improvement, flat support volume, and correctly noting no decisions or action items.",
+          "samples": [
+            1.0
+          ],
+          "error": null
+        },
+        {
+          "scorer": "cost",
+          "scorer_type": "cost_budget",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 1.0,
+          "reasoning": "$0.000141 within $0.010000 budget",
+          "samples": [],
+          "error": null
+        },
+        {
+          "scorer": "latency",
+          "scorer_type": "latency_budget",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 1.0,
+          "reasoning": "2671ms within 120000ms budget",
+          "samples": [],
+          "error": null
+        }
+      ],
+      "tags": [
+        "conservatism",
+        "no-decisions"
+      ],
+      "error": null
+    },
+    {
+      "case_id": "vendor-call-id",
+      "input": "[00:04] Putri: Selamat siang Pak, terima kasih sudah menyempatkan waktu.\n[00:12] Hendra: Siang Bu Putri. Jadi terkait kontrak maintenance, kami usulkan perpanjangan dua belas bulan.\n[00:27] Putri: Kami setuju perpanjang dua belas bulan, dengan catatan SLA response time turun dari delapan jam ke empat jam.\n[00:43] Hendra: Empat jam bisa, tapi ada penyesuaian biaya sekitar lima persen.\n[00:55] Putri: Baik, saya akan kirim draf revisi kontrak hari Kamis.\n[01:08] Hendra: [inaudible]\n[01:15] Putri: Maaf Pak, tadi suaranya putus-putus. Bisa diulang via email saja ya.",
+      "output": "{\n  \"title\": \"Maintenance Contract Extension Negotiation\",\n  \"tldr\": \"Hendra proposed a 12-month maintenance contract extension. Putri agreed on the condition that the SLA response time drops from 8 hours to 4 hours, and Hendra accepted with a cost adjustment of about 5%. Putri will send a revised contract draft on Thursday.\",\n  \"key_points\": [\n    \"Hendra proposed a 12-month maintenance contract extension.\",\n    \"Putri agreed to extend for 12 months, requiring the SLA response time to decrease from 8 hours to 4 hours.\",\n    \"Hendra accepted the 4-hour response time but noted a cost adjustment of about 5%.\",\n    \"Putri will send the revised contract draft on Thursday.\"\n  ],\n  \"decisions\": [\n    \"The maintenance contract will be extended for 12 months.\",\n    \"The SLA response time will be reduced from 8 hours to 4 hours, with an associated cost adjustment of about 5%.\"\n  ],\n  \"action_items\": [\n    {\n      \"task\": \"Send revised contract draft\",\n      \"owner\": \"Putri\",\n      \"due\": \"Thursday\"\n    }\n  ],\n  \"open_questions\": []\n}",
+      "expected_output": null,
+      "latency_ms": 6275.645124998846,
+      "usage": {
+        "prompt_tokens": 520,
+        "completion_tokens": 784,
+        "cost_usd": 0.00029232000000000005
+      },
+      "scores": [
+        {
+          "scorer": "schema",
+          "scorer_type": "json_schema_valid",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 2.0,
+          "threshold": 1.0,
+          "reasoning": null,
+          "samples": [],
+          "error": null
+        },
+        {
+          "scorer": "faithfulness",
+          "scorer_type": "faithfulness",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 2.0,
+          "threshold": 0.7,
+          "reasoning": "Every factual claim in the answer is directly supported by the context: Hendra proposed a 12-month extension, Putri agreed with the SLA response time change from 8 to 4 hours, Hendra accepted with about 5% cost adjustment, and Putri will send the revised draft on Thursday.",
+          "samples": [
+            1.0
+          ],
+          "error": null
+        },
+        {
+          "scorer": "relevance",
+          "scorer_type": "relevance",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 0.6,
+          "reasoning": "The answer directly and comprehensively summarizes the conversation, including the contract extension agreement, SLA change, cost adjustment, and action item. It fully addresses the content of the question without irrelevant material.",
+          "samples": [
+            1.0
+          ],
+          "error": null
+        },
+        {
+          "scorer": "cost",
+          "scorer_type": "cost_budget",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 1.0,
+          "reasoning": "$0.000292 within $0.010000 budget",
+          "samples": [],
+          "error": null
+        },
+        {
+          "scorer": "latency",
+          "scorer_type": "latency_budget",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 1.0,
+          "reasoning": "6276ms within 120000ms budget",
+          "samples": [],
+          "error": null
+        }
+      ],
+      "tags": [
+        "indonesian",
+        "negotiation"
+      ],
+      "error": null
+    },
+    {
+      "case_id": "incident-review",
+      "input": "[00:02] Farhan: Post-mortem for Tuesday's outage. Timeline first: alerts fired at 09:41, rollback finished 10:07.\n[00:18] Sari: Root cause was the connection pool exhaustion after the ORM upgrade, not the load balancer like we first thought.\n[00:34] Farhan: Right. So the earlier theory is dead. Two follow-ups: we will add a pool saturation alert, and Sari will write the runbook entry.\n[00:52] Sari: Yes, runbook by end of week. Should we also pin the ORM minor version?\n[01:05] Farhan: Undecided — depends on how upstream handles the regression. Let's revisit next week.",
+      "output": "{\n  \"title\": \"Post-mortem for Tuesday's outage\",\n  \"tldr\": \"The team reviewed Tuesday's outage, concluding the root cause was connection pool exhaustion after the ORM upgrade, not the load balancer. Follow-ups include adding a pool saturation alert and writing a runbook entry. Whether to pin the ORM minor version remains undecided until upstream's regression handling is reviewed.\",\n  \"key_points\": [\n    \"Alerts fired at 09:41 and rollback finished at 10:07.\",\n    \"Root cause was connection pool exhaustion after the ORM upgrade.\",\n    \"The earlier theory that the load balancer caused the outage is dead.\",\n    \"Two follow-ups were identified: add a pool saturation alert and write a runbook entry.\",\n    \"Pinning the ORM minor version is undecided and will be revisited next week.\"\n  ],\n  \"decisions\": [\n    \"Root cause was connection pool exhaustion after the ORM upgrade, not the load balancer.\",\n    \"The earlier load balancer theory is rejected.\"\n  ],\n  \"action_items\": [\n    {\n      \"task\": \"Add a pool saturation alert\",\n      \"owner\": null,\n      \"due\": null\n    },\n    {\n      \"task\": \"Write the runbook entry\",\n      \"owner\": \"Sari\",\n      \"due\": \"end of week\"\n    }\n  ],\n  \"open_questions\": [\n    \"Should we pin the ORM minor version?\",\n    \"How does upstream handle the regression?\"\n  ]\n}",
+      "expected_output": null,
+      "latency_ms": 5718.15164200234,
+      "usage": {
+        "prompt_tokens": 489,
+        "completion_tokens": 670,
+        "cost_usd": 0.00025606000000000007
+      },
+      "scores": [
+        {
+          "scorer": "schema",
+          "scorer_type": "json_schema_valid",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 2.0,
+          "threshold": 1.0,
+          "reasoning": null,
+          "samples": [],
+          "error": null
+        },
+        {
+          "scorer": "faithfulness",
+          "scorer_type": "faithfulness",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 2.0,
+          "threshold": 0.7,
+          "reasoning": "All factual claims in the answer are directly supported by the context, including timeline, root cause, rejection of load balancer theory, follow-ups, owner/due for runbook, and the undecided pinning revisited next week.",
+          "samples": [
+            1.0
+          ],
+          "error": null
+        },
+        {
+          "scorer": "relevance",
+          "scorer_type": "relevance",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 0.6,
+          "reasoning": "The answer fully captures all the information from the question: timeline, root cause, rejection of earlier theory, follow-ups, owners, deadlines, and open question. No irrelevant material is included.",
+          "samples": [
+            1.0
+          ],
+          "error": null
+        },
+        {
+          "scorer": "cost",
+          "scorer_type": "cost_budget",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 1.0,
+          "reasoning": "$0.000256 within $0.010000 budget",
+          "samples": [],
+          "error": null
+        },
+        {
+          "scorer": "latency",
+          "scorer_type": "latency_budget",
+          "score": 1.0,
+          "verdict": "pass",
+          "weight": 1.0,
+          "threshold": 1.0,
+          "reasoning": "5718ms within 120000ms budget",
+          "samples": [],
+          "error": null
+        }
+      ],
+      "tags": [
+        "incident"
+      ],
+      "error": null
+    }
+  ]
+}

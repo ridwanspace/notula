@@ -1,0 +1,58 @@
+name: backend
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Sync
+        run: uv sync --frozen
+      - name: Lint (ruff)
+        run: |
+          uv run ruff check src tests
+          uv run ruff format --check src tests
+      - name: Security (bandit)
+        run: uv run bandit -c pyproject.toml -q -r src
+      - name: Types (mypy --strict)
+        run: uv run mypy
+      - name: Architecture contracts (import-linter)
+        run: uv run lint-imports
+      - name: Unit tests + domain/application 100% gate
+        # The framework-free core must be fully unit-tested; adapters are
+        # covered by the integration job below. Everything runs offline —
+        # this workflow references no secrets by design.
+        run: |
+          uv run pytest tests/unit -q \
+            --cov=src/notula --cov-report=term-missing:skip-covered
+          uv run coverage report \
+            --include="src/notula/domain/*,src/notula/application/*" \
+            --fail-under=100
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Sync
+        run: uv sync --frozen
+      - name: All tests + overall 85% gate
+        run: |
+          uv run pytest tests/unit tests/integration -q \
+            --cov=src/notula --cov-report=term-missing:skip-covered
+          uv run coverage report --fail-under=85

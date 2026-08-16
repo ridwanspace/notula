@@ -1,0 +1,17 @@
+{
+  "duration_seconds": 60.0,
+  "utterances": [
+    {"start": 1, "speaker": "Rina", "text": "Okay, quick standup — Dimas, silakan mulai duluan."},
+    {"start": 5, "speaker": "Dimas", "text": "Sure. Kemarin saya selesaikan export bug di modul reporting, sudah saya push ke staging."},
+    {"start": 12, "speaker": "Dimas", "text": "Today I will finish the invoice reconciliation script and hand it to QA."},
+    {"start": 18, "speaker": "Speaker 3", "text": "Blocker dari saya: staging sempat down sekitar satu jam tadi pagi."},
+    {"start": 24, "speaker": "Rina", "text": "Noted. We agreed to move the release review to Thursday, jadi masih ada buffer."},
+    {"start": 31, "speaker": "Speaker 3", "text": "For the demo environment, apakah kita perlu seed data baru?"},
+    {"start": 36, "speaker": "Rina", "text": "Oke, kita perlu konfirmasi dulu siapa yang pegang seed script sekarang."},
+    {"start": 40, "speaker": "Dimas", "text": "Itu masih di saya. Saya akan update seed script itu by Friday."},
+    {"start": 46, "speaker": "Rina", "text": "And we decided to keep the sprint scope unchanged, no new tickets this week."},
+    {"start": 52, "speaker": "Speaker 3", "text": "[inaudible] — sorry, mic issue. Anyway, QA report follows this afternoon."},
+    {"start": 56, "speaker": "Rina", "text": "Thanks. I will send the recap ke channel setelah standup ini."},
+    {"start": 59, "speaker": "Dimas", "text": "Siap, thanks semua."}
+  ]
+}

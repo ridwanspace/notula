@@ -1,0 +1,4 @@
+Write ALL summary fields in English.
+
+Transcript:
+{input}

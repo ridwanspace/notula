@@ -1,0 +1,107 @@
+# Live scoring suite: the shipped pass-2 prompt against deepseek-v4-flash,
+# judged by the same model. Costs real tokens (~5 cases x ~1k tokens).
+#
+#   DEEPSEEK_API_KEY=... uv run llm-eval run ../evals/suite.live.yaml --out ../evals/runs/live.json
+#
+# Judge choice is part of the eval's definition: a different judge model can
+# pass/fail different cases on the identical suite.
+name: notula-summarize
+description: Meeting-summary generation over the 5-case golden transcript set (live).
+
+dataset:
+  path: golden/meetings.jsonl
+
+target:
+  name: notula-summarizer
+  version: v1-deepseek
+  prompt_file: prompts/summarize_v1.txt
+  # Mirrors SYSTEM_PROMPT in backend/src/notula/application/summarize.py —
+  # keep the two in sync so eval results describe the shipped prompt.
+  system: |-
+    You are a precise meeting analyst. You turn a diarized meeting
+    transcript into a structured summary.
+
+    Respond with a single JSON object and nothing else — no prose, no code fences.
+    The object must have exactly these fields:
+    - "title": string — a short descriptive title based on the meeting content.
+    - "tldr": string — a 2-3 sentence summary.
+    - "key_points": array of strings.
+    - "decisions": array of strings. A decision requires something actually being
+      decided in the transcript; if nothing was decided, use an empty array.
+    - "action_items": array of objects, each {"task": string, "owner": string or null,
+      "due": string or null}. An action item requires a commitment or clear
+      assignment. Never invent owners or due dates — use null when not stated.
+    - "open_questions": array of strings.
+
+    Rules:
+    - Keep quoted phrases, names, and technical terms exactly as they appear in the
+      transcript.
+    - Passages marked [inaudible] stay [inaudible]; never guess at them.
+    - Base every field only on what the transcript actually says.
+  provider:
+    kind: openai
+    model: deepseek-v4-flash
+    base_url: https://api.deepseek.com
+    api_key_env: DEEPSEEK_API_KEY
+    # deepseek-v4 is a reasoning model: part of max_tokens is spent thinking, so
+    # a small cap truncates the summary JSON mid-string.
+    max_tokens: 4096
+    # Cache-miss input / output USD per 1M tokens, deepseek.ai/pricing 2026-08-16.
+    prices_per_mtok:
+      deepseek-v4-flash: [0.14, 0.28]
+
+judge:
+  kind: openai
+  model: deepseek-v4-flash
+  base_url: https://api.deepseek.com
+  api_key_env: DEEPSEEK_API_KEY
+  max_tokens: 4096
+  prices_per_mtok:
+    deepseek-v4-flash: [0.14, 0.28]
+
+judge_repeat: 1
+
+scorers:
+  # Structural gate: the exact shape notula's parser enforces in production.
+  - type: json_schema_valid
+    name: schema
+    weight: 2.0
+    schema:
+      type: object
+      required: [title, tldr, key_points, decisions, action_items, open_questions]
+      additionalProperties: false
+      properties:
+        title: { type: string }
+        tldr: { type: string }
+        key_points: { type: array, items: { type: string } }
+        decisions: { type: array, items: { type: string } }
+        action_items:
+          type: array
+          items:
+            type: object
+            required: [task]
+            additionalProperties: false
+            properties:
+              task: { type: string }
+              owner: { type: [string, "null"] }
+              due: { type: [string, "null"] }
+        open_questions: { type: array, items: { type: string } }
+
+  # Is every claim in the summary grounded in the transcript? This is the scorer
+  # the `status-only` case exists for: invented decisions fail here.
+  - type: faithfulness
+    name: faithfulness
+    threshold: 0.7
+    weight: 2.0
+
+  - type: relevance
+    name: relevance
+    threshold: 0.6
+
+  - type: cost_budget
+    name: cost
+    max_usd: 0.01
+
+  - type: latency_budget
+    name: latency
+    max_ms: 120000

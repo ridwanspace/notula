@@ -1,0 +1,52 @@
+# Offline plumbing suite — honest about what it is.
+#
+# llm-eval-harness's mock provider is a deterministic fixture; it cannot produce
+# meeting-summary JSON, so scoring summary quality against it would be theatre.
+# This suite exists so `make eval` and CI prove, with zero API keys, that the
+# dataset parses, the prompt renders, and the harness pipeline runs end-to-end.
+# The suite that actually scores the summarizer is suite.live.yaml.
+name: notula-summarize
+description: Meeting-summary generation over the 5-case golden transcript set (plumbing run).
+
+dataset:
+  path: golden/meetings.jsonl
+
+target:
+  name: notula-summarizer
+  version: v1-mock
+  prompt_file: prompts/summarize_v1.txt
+  # Mirrors SYSTEM_PROMPT in backend/src/notula/application/summarize.py —
+  # keep the two in sync so eval results describe the shipped prompt.
+  system: |-
+    You are a precise meeting analyst. You turn a diarized meeting
+    transcript into a structured summary.
+
+    Respond with a single JSON object and nothing else — no prose, no code fences.
+    The object must have exactly these fields:
+    - "title": string — a short descriptive title based on the meeting content.
+    - "tldr": string — a 2-3 sentence summary.
+    - "key_points": array of strings.
+    - "decisions": array of strings. A decision requires something actually being
+      decided in the transcript; if nothing was decided, use an empty array.
+    - "action_items": array of objects, each {"task": string, "owner": string or null,
+      "due": string or null}. An action item requires a commitment or clear
+      assignment. Never invent owners or due dates — use null when not stated.
+    - "open_questions": array of strings.
+
+    Rules:
+    - Keep quoted phrases, names, and technical terms exactly as they appear in the
+      transcript.
+    - Passages marked [inaudible] stay [inaudible]; never guess at them.
+    - Base every field only on what the transcript actually says.
+  provider:
+    kind: mock
+    model: mock-1
+
+scorers:
+  - type: regex_match
+    name: non_empty
+    pattern: "\\S"
+
+  - type: latency_budget
+    name: latency
+    max_ms: 5000

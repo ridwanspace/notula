@@ -1,0 +1,162 @@
+[project]
+name = "notula-backend"
+version = "0.1.0"
+description = "Notula — measured two-pass meeting-notes pipeline: multimodal transcription, re-runnable summaries, schema repair, per-stage cost metering."
+requires-python = ">=3.13,<3.14"
+authors = [{ name = "Muhammad Ridwan" }]
+license = { text = "MIT" }
+dependencies = [
+  "fastapi>=0.115.12",
+  "uvicorn[standard]>=0.34.2",
+  "pydantic>=2.10",
+  "pydantic-settings>=2.8",
+  "sqlalchemy[asyncio]>=2.0.36",
+  "aiosqlite>=0.20",
+  "greenlet>=3.1",
+  "httpx>=0.28",
+  "structlog>=24.4",
+  "python-multipart>=0.0.20",
+  "openai>=1.60",
+  "google-genai>=1.0",
+]
+
+[dependency-groups]
+# Dev tooling pinned with upper bounds: an unpinned floor means a future minor
+# release adds lint rules and breaks CI on unchanged code.
+dev = [
+  "mypy>=1.16,<2",
+  "ruff>=0.11.9,<0.17",
+  "import-linter>=2.2,<3",
+  "pytest>=8.3.5,<10",
+  "pytest-asyncio>=0.25,<2",
+  "pytest-cov>=6.1.1,<8",
+  "bandit[toml]>=1.8.6,<2",
+  "pre-commit>=4.2,<5",
+]
+eval = [
+  "llm-eval-harness @ git+https://github.com/ridwanspace/llm-eval-harness",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/notula"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "tests"]
+exclude = [".venv", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "N", "S", "UP", "W", "ASYNC", "RUF"]
+ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S105", "S106"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.13"
+mypy_path = "src"
+packages = ["notula"]
+strict = true
+warn_unreachable = true
+warn_redundant_casts = true
+warn_unused_configs = true
+no_implicit_reexport = true
+exclude = "(^\\.venv/|^build/|^dist/)"
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers"
+pythonpath = ["src"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+source = ["src/notula"]
+branch = true
+
+[tool.coverage.report]
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError", "\\.\\.\\."]
+
+[tool.bandit]
+exclude_dirs = [".venv", "tests"]
+
+# ── Architecture contracts (CI-enforced; see docs/adr/0001) ──────────────────
+[tool.importlinter]
+root_packages = ["notula"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Layers: dependencies point inward (presentation/infrastructure -> application -> domain)"
+type = "layers"
+layers = [
+  "notula.presentation : notula.infrastructure",
+  "notula.application",
+  "notula.domain",
+]
+exhaustive = false
+
+[[tool.importlinter.contracts]]
+name = "Domain is framework-free (stdlib only)"
+type = "forbidden"
+source_modules = ["notula.domain"]
+forbidden_modules = [
+  "fastapi",
+  "starlette",
+  "pydantic",
+  "pydantic_settings",
+  "sqlalchemy",
+  "aiosqlite",
+  "httpx",
+  "structlog",
+  "openai",
+  "google",
+  "uvicorn",
+]
+
+[[tool.importlinter.contracts]]
+name = "Application depends only on domain (ports, not vendors)"
+type = "forbidden"
+source_modules = ["notula.application"]
+forbidden_modules = [
+  "fastapi",
+  "starlette",
+  "pydantic",
+  "pydantic_settings",
+  "sqlalchemy",
+  "aiosqlite",
+  "httpx",
+  "structlog",
+  "openai",
+  "google",
+  "uvicorn",
+]
+
+[[tool.importlinter.contracts]]
+name = "Vendor SDKs are quarantined in infrastructure.providers"
+type = "forbidden"
+source_modules = [
+  "notula.domain",
+  "notula.application",
+  "notula.presentation",
+  "notula.infrastructure.audio",
+  "notula.infrastructure.db",
+  "notula.infrastructure.events",
+  "notula.infrastructure.repository",
+  "notula.infrastructure.worker",
+]
+forbidden_modules = ["openai", "google"]

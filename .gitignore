@@ -1,0 +1,52 @@
+# Secrets — never commit API keys (rule: this file exists BEFORE any .env is written)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+
+# Node (frontend phase)
+node_modules/
+.next/
+playwright-report/
+test-results/
+
+# Runtime data — uploaded audio and the SQLite store may contain personal data
+var/
+*.db
+*.sqlite3
+
+# Media — real recordings must never be committed
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.ogg
+*.mp4
+*.webm
+!tests/fixtures/*.wav
+!samples/demo/*.wav
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Logs & scratch
+*.log
+tmp/

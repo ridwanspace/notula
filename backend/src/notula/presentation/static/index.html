@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Notula — meeting minutes pipeline</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%235e6ad2'/><text x='50' y='72' font-size='62' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>N</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Geist', 'system-ui', 'sans-serif'],
+          mono: ['Geist Mono', 'monospace'],
+        },
+        colors: {
+          bg: '#08090a',
+          panel: '#0e0f11',
+          line: 'rgba(255,255,255,0.08)',
+          soft: 'rgba(255,255,255,0.05)',
+          dim: '#8a8f98',
+          hi: '#f7f8f8',
+          accent: '#5e6ad2',
+        },
+      },
+    },
+  }
+</script>
+<style>
+  ::selection { background: rgba(94,106,210,.35); }
+  body { background:
+    radial-gradient(600px 300px at 50% -80px, rgba(94,106,210,.14), transparent 70%),
+    #08090a; }
+  .glass { background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015)); }
+  .btn-shine { position: relative; overflow: hidden; }
+  .btn-shine::after { content:''; position:absolute; inset:0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.25) 50%, transparent 60%);
+    transform: translateX(-120%); transition: transform .6s ease; }
+  .btn-shine:hover::after { transform: translateX(120%); }
+
+  .wave { display:flex; align-items:center; justify-content:center; gap:4px; height:56px; }
+  .wave span { width:4px; border-radius:99px;
+    background: linear-gradient(180deg,#8b93ff,#5e6ad2);
+    animation: wv 1.15s ease-in-out infinite; }
+  @keyframes wv {
+    0%,100% { height:12%; opacity:.55; }
+    50%     { height:100%; opacity:1; }
+  }
+
+  .fade-up { animation: fadeUp .5s cubic-bezier(.2,.7,.2,1) both; }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform:none; } }
+
+  .dropzone.dragover { border-color: rgba(94,106,210,.8); background: rgba(94,106,210,.07); }
+  audio { border-radius: 10px; filter: invert(.88) hue-rotate(180deg); }
+  .ts-link:hover { color: #a5acff; text-decoration: underline; }
+  details summary::-webkit-details-marker { display:none; }
+  .scrollbar-thin::-webkit-scrollbar { width:8px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 99px; }
+
+  /* stage timeline */
+  .stage-dot { width:10px; height:10px; border-radius:99px; border:2px solid rgba(255,255,255,.18); }
+  .stage-done .stage-dot { background:#5e6ad2; border-color:#5e6ad2; }
+  .stage-active .stage-dot { border-color:#8b93ff; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(139,147,255,.5);} 50% { box-shadow:0 0 0 6px rgba(139,147,255,0);} }
+  .stage-done .stage-label, .stage-active .stage-label { color:#f7f8f8; }
+</style>
+</head>
+
+<body class="min-h-screen font-sans text-hi antialiased">
+
+  <!-- Nav -->
+  <header class="sticky top-0 z-20 border-b border-line bg-bg/70 backdrop-blur-xl">
+    <div class="mx-auto flex h-14 max-w-3xl items-center justify-between px-5">
+      <div class="flex items-center gap-2.5">
+        <div class="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-[#8b93ff] to-accent text-[11px] font-bold text-white shadow-[0_0_18px_rgba(94,106,210,.45)]">N</div>
+        <span class="text-[15px] font-semibold tracking-tight">Notula</span>
+        <span class="ml-1 rounded-full border border-line bg-soft px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-dim">demo UI</span>
+      </div>
+      <span id="provider-badge" class="rounded-full border border-line bg-soft px-2.5 py-1 font-mono text-[11px] text-dim" title="Pipeline provider">…</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-3xl px-5 pb-24">
+
+    <!-- Hero -->
+    <section class="pt-14 pb-10 text-center">
+      <h1 class="text-balance bg-gradient-to-b from-white to-white/55 bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-[44px] sm:leading-[1.1]">
+        Meetings in. Minutes out.
+      </h1>
+      <p class="mx-auto mt-4 max-w-lg text-[15px] leading-relaxed text-dim">
+        Two-pass pipeline: audio is transcribed and diarized once, then summaries are
+        generated from the stored transcript — re-runnable in another language without
+        re-transcribing.
+      </p>
+    </section>
+
+    <!-- Upload card -->
+    <section id="card-upload" class="glass rounded-2xl border border-line p-2 shadow-2xl shadow-black/40">
+      <div id="dropzone" class="dropzone group relative cursor-pointer rounded-xl border border-dashed border-line px-6 py-14 text-center transition-colors duration-200">
+        <input id="file-input" type="file" accept="audio/*,.m4a,.flac" class="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+        <div class="pointer-events-none flex flex-col items-center gap-3">
+          <div class="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-soft transition group-hover:border-accent/50 group-hover:shadow-[0_0_24px_rgba(94,106,210,.25)]">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-dim transition group-hover:text-hi">
+              <path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-[14px] font-medium">Drop a recording here <span class="text-dim">or click to browse</span></p>
+            <p class="mt-1 text-[12px] text-dim">MP3 · WAV · FLAC · M4A · OGG — long recordings are chunked automatically</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- roster (optional) + summary language -->
+      <div class="flex flex-col gap-3 px-4 pt-3 sm:flex-row sm:items-end">
+        <div class="min-w-0 flex-1">
+          <label for="roster-input" class="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-dim">Participants <span class="normal-case tracking-normal">(optional — helps name speakers correctly)</span></label>
+          <input id="roster-input" type="text" placeholder="e.g. Rina (PM), Dimas (Eng), Sari (Sales)"
+            class="w-full rounded-lg border border-line bg-soft px-3 py-2.5 text-[13px] text-hi placeholder:text-dim/60 outline-none transition focus:border-accent/60 focus:shadow-[0_0_0_3px_rgba(94,106,210,.15)]" />
+        </div>
+        <div class="shrink-0">
+          <span class="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-dim">Summary language</span>
+          <div id="lang-toggle" class="inline-flex rounded-lg border border-line bg-soft p-0.5">
+            <button data-lang="en" class="rounded-md px-3 py-2 text-[12px] font-medium transition">English</button>
+            <button data-lang="id" class="rounded-md px-3 py-2 text-[12px] font-medium transition">Bahasa</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- selected file row -->
+      <div id="file-row" class="hidden items-center justify-between gap-3 px-4 py-3.5">
+        <div class="flex min-w-0 items-center gap-3">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-line bg-soft">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-accent">
+              <path d="M9 18V6l10-2v12" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <p id="file-name" class="truncate text-[13px] font-medium"></p>
+            <p id="file-size" class="font-mono text-[11px] text-dim"></p>
+          </div>
+        </div>
+        <div class="flex shrink-0 items-center gap-2">
+          <button id="btn-clear" class="rounded-lg border border-line px-3 py-2 text-[13px] text-dim transition hover:border-white/20 hover:text-hi">Clear</button>
+          <button id="btn-go" class="btn-shine rounded-lg bg-hi px-4 py-2 text-[13px] font-semibold text-black transition hover:bg-white/85">
+            Process meeting
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Processing -->
+    <section id="card-processing" class="glass mt-6 hidden rounded-2xl border border-line px-6 py-8">
+      <div class="wave" id="wave"></div>
+      <p id="processing-label" class="mt-5 text-center text-[14px] font-medium">Queued…</p>
+      <p class="mt-1 text-center font-mono text-[12px] text-dim"><span id="elapsed">0.0</span>s elapsed</p>
+
+      <div class="mx-auto mt-6 flex max-w-md items-center justify-between gap-2" id="stage-timeline">
+        <div class="flex flex-1 flex-col items-center gap-1.5" data-stage="normalize">
+          <span class="stage-dot"></span><span class="stage-label text-[11px] font-medium uppercase tracking-wider text-dim">Normalize</span>
+        </div>
+        <div class="h-px flex-1 bg-line"></div>
+        <div class="flex flex-1 flex-col items-center gap-1.5" data-stage="transcribe">
+          <span class="stage-dot"></span><span class="stage-label text-[11px] font-medium uppercase tracking-wider text-dim">Transcribe</span>
+        </div>
+        <div class="h-px flex-1 bg-line"></div>
+        <div class="flex flex-1 flex-col items-center gap-1.5" data-stage="summarize">
+          <span class="stage-dot"></span><span class="stage-label text-[11px] font-medium uppercase tracking-wider text-dim">Summarize</span>
+        </div>
+      </div>
+
+      <ul id="live-stages" class="mx-auto mt-5 max-w-md space-y-1 font-mono text-[11.5px] text-dim"></ul>
+    </section>
+
+    <!-- Error -->
+    <section id="card-error" class="mt-6 hidden rounded-2xl border border-red-500/25 bg-red-500/[.06] px-5 py-4">
+      <p class="text-[13px] font-medium text-red-300">Pipeline failed</p>
+      <p id="error-msg" class="mt-1 font-mono text-[12px] leading-relaxed text-red-300/70"></p>
+    </section>
+
+    <!-- Results -->
+    <section id="results" class="hidden space-y-4 pt-8">
+      <div class="flex flex-wrap items-end justify-between gap-4 px-1">
+        <div class="min-w-0">
+          <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-accent">Summary</p>
+          <h2 id="r-title" class="mt-1 text-[22px] font-semibold tracking-tight"></h2>
+          <p class="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] text-dim">
+            <span id="r-meta"></span>
+            <span id="r-version" class="rounded-full border border-line bg-soft px-2 py-0.5"></span>
+            <span id="r-repairs" class="hidden rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-amber-300"></span>
+          </p>
+        </div>
+        <div class="flex shrink-0 items-center gap-2">
+          <button id="btn-copy-md" class="rounded-lg border border-line px-3 py-2 text-[13px] text-dim transition hover:border-white/20 hover:text-hi">Copy MD</button>
+          <button id="btn-copy-wa" class="rounded-lg border border-[#25D366]/30 bg-[#25D366]/10 px-3 py-2 text-[13px] font-medium text-[#4fe07f] transition hover:bg-[#25D366]/20">WhatsApp</button>
+          <button id="btn-again" class="rounded-lg border border-line px-3 py-2 text-[13px] text-dim transition hover:border-white/20 hover:text-hi">New upload</button>
+        </div>
+      </div>
+
+      <!-- audio player synced to transcript -->
+      <div id="player-card" class="fade-up glass rounded-2xl border border-line p-4">
+        <audio id="player" controls preload="metadata" class="w-full"></audio>
+        <p class="mt-2 text-center text-[11px] text-dim">click any transcript timestamp to jump the audio there</p>
+      </div>
+
+      <!-- TLDR -->
+      <div class="fade-up glass rounded-2xl border border-line p-5">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="h-1.5 w-1.5 rounded-full bg-accent shadow-[0_0_10px_rgba(94,106,210,.9)]"></span>
+          <h3 class="text-[12px] font-semibold uppercase tracking-wider text-dim">TL;DR</h3>
+        </div>
+        <p id="r-tldr" class="text-[15px] leading-relaxed text-hi/90"></p>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="fade-up glass rounded-2xl border border-line p-5" style="animation-delay:.05s">
+          <h3 class="mb-3 text-[12px] font-semibold uppercase tracking-wider text-dim">Key points</h3>
+          <ul id="r-points" class="space-y-2.5 text-[13.5px] leading-relaxed text-hi/85"></ul>
+        </div>
+        <div class="fade-up glass rounded-2xl border border-line p-5" style="animation-delay:.1s">
+          <h3 class="mb-3 text-[12px] font-semibold uppercase tracking-wider text-dim">Decisions</h3>
+          <ul id="r-decisions" class="space-y-2.5 text-[13.5px] leading-relaxed text-hi/85"></ul>
+        </div>
+      </div>
+
+      <!-- Action items -->
+      <div class="fade-up glass rounded-2xl border border-line p-5" style="animation-delay:.15s">
+        <h3 class="mb-3 text-[12px] font-semibold uppercase tracking-wider text-dim">Action items</h3>
+        <ul id="r-actions" class="space-y-2"></ul>
+      </div>
+
+      <!-- Open questions -->
+      <div id="wrap-questions" class="fade-up glass rounded-2xl border border-line p-5" style="animation-delay:.2s">
+        <h3 class="mb-3 text-[12px] font-semibold uppercase tracking-wider text-dim">Open questions</h3>
+        <ul id="r-questions" class="space-y-2.5 text-[13.5px] leading-relaxed text-hi/85"></ul>
+      </div>
+
+      <!-- Pipeline: measured per-stage cost/latency -->
+      <div class="fade-up glass rounded-2xl border border-accent/25 p-5" style="animation-delay:.22s">
+        <div class="mb-3 flex items-center justify-between">
+          <h3 class="text-[12px] font-semibold uppercase tracking-wider text-dim">Pipeline — measured</h3>
+          <span id="p-total" class="font-mono text-[12px] text-hi/90"></span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left font-mono text-[12px]">
+            <thead>
+              <tr class="border-b border-line text-[10.5px] uppercase tracking-wider text-dim">
+                <th class="py-2 pr-3 font-medium">Stage</th>
+                <th class="py-2 pr-3 font-medium">Model</th>
+                <th class="py-2 pr-3 text-right font-medium">Wall&nbsp;s</th>
+                <th class="py-2 pr-3 text-right font-medium">Tok&nbsp;in</th>
+                <th class="py-2 pr-3 text-right font-medium">Tok&nbsp;out</th>
+                <th class="py-2 text-right font-medium">Cost</th>
+              </tr>
+            </thead>
+            <tbody id="p-rows" class="text-hi/85"></tbody>
+          </table>
+        </div>
+        <p class="mt-2 text-[11px] text-dim">Token counts come from provider usage metadata; costs from the published price table. Unpriced models show “n/a”.</p>
+      </div>
+
+      <!-- Re-summarize (pass 2 is re-runnable) -->
+      <div class="fade-up glass flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line p-5" style="animation-delay:.24s">
+        <div class="min-w-0">
+          <h3 class="text-[12px] font-semibold uppercase tracking-wider text-dim">Re-summarize</h3>
+          <p class="mt-1 text-[12.5px] leading-relaxed text-dim">Runs pass 2 again from the stored transcript — no re-transcription.</p>
+        </div>
+        <div class="flex shrink-0 items-center gap-2">
+          <select id="resum-lang" class="rounded-lg border border-line bg-soft px-3 py-2 text-[13px] text-hi outline-none focus:border-accent/60">
+            <option value="en">English</option>
+            <option value="id">Bahasa Indonesia</option>
+          </select>
+          <button id="btn-resum" class="btn-shine rounded-lg bg-accent px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#6b77e0]">Run</button>
+        </div>
+      </div>
+
+      <!-- Transcript -->
+      <details class="fade-up glass group rounded-2xl border border-line" style="animation-delay:.26s">
+        <summary class="flex cursor-pointer items-center justify-between p-5">
+          <h3 class="text-[12px] font-semibold uppercase tracking-wider text-dim">Transcript <span id="t-count" class="ml-1 normal-case tracking-normal"></span></h3>
+          <span class="text-[12px] text-dim transition group-open:rotate-180">▾</span>
+        </summary>
+        <div id="r-transcript" class="scrollbar-thin max-h-96 space-y-4 overflow-y-auto border-t border-line p-5"></div>
+      </details>
+    </section>
+
+    <!-- History (server-side) -->
+    <section id="history" class="hidden pt-10">
+      <div class="mb-3 flex items-center justify-between px-1">
+        <h3 class="text-[12px] font-semibold uppercase tracking-wider text-dim">Meetings</h3>
+        <button id="btn-history-refresh" class="text-[12px] text-dim transition hover:text-hi">Refresh</button>
+      </div>
+      <ul id="history-list" class="space-y-2"></ul>
+    </section>
+  </main>
+
+  <footer class="border-t border-line py-6 text-center text-[12px] text-dim">
+    Notula · the transcript is the system of record — summaries are derived and re-runnable
+  </footer>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  // waveform bars
+  const wave = $('wave');
+  for (let i = 0; i < 28; i++) {
+    const b = document.createElement('span');
+    b.style.animationDelay = `${(i * 0.07) % 1.15}s`;
+    wave.appendChild(b);
+  }
+
+  const cards = { upload: $('card-upload'), processing: $('card-processing'), error: $('card-error'), results: $('results') };
+  let file = null, timer = null, es = null, current = null; // current = last loaded detail
+
+  // ---- provider badge ----
+  fetch('/healthz').then((r) => r.json()).then((h) => {
+    const mock = h.provider === 'mock';
+    $('provider-badge').textContent = mock ? 'mock provider' : `live · ${h.provider}`;
+    $('provider-badge').title = mock
+      ? 'Deterministic mock output — no API keys, no network calls'
+      : 'Live providers (Gemini transcription, DeepSeek summaries)';
+  }).catch(() => { $('provider-badge').textContent = 'offline'; });
+
+  // ---- summary language toggle (persisted) ----
+  const LANG_KEY = 'notula.lang';
+  let lang = localStorage.getItem(LANG_KEY) || 'en';
+  const langButtons = document.querySelectorAll('#lang-toggle [data-lang]');
+  function paintLang() {
+    langButtons.forEach((b) => {
+      const on = b.dataset.lang === lang;
+      b.classList.toggle('bg-accent', on);
+      b.classList.toggle('text-white', on);
+      b.classList.toggle('text-dim', !on);
+    });
+  }
+  langButtons.forEach((b) => b.addEventListener('click', () => {
+    lang = b.dataset.lang;
+    localStorage.setItem(LANG_KEY, lang);
+    paintLang();
+  }));
+  paintLang();
+
+  // ---- helpers ----
+  const fmtSize = (b) => b > 1048576 ? (b/1048576).toFixed(1)+' MB' : (b/1024).toFixed(0)+' KB';
+  const fmtTs = (secs) => {
+    const s = Math.max(0, Math.floor(secs)), h = Math.floor(s/3600), m = Math.floor((s%3600)/60), r = s%60;
+    return (h ? `${h}:${String(m).padStart(2,'0')}` : String(m).padStart(2,'0')) + ':' + String(r).padStart(2,'0');
+  };
+  const fmtCost = (c) => c === null || c === undefined ? 'n/a' : '$' + (c === 0 ? '0.00' : c.toFixed(6).replace(/0+$/,'').replace(/\.$/,'.00'));
+  const fmtInt = (n) => (n ?? 0).toLocaleString('en-US');
+  const STATE_LABELS = { uploaded: 'Queued…', normalizing: 'Normalizing audio…', transcribing: 'Transcribing & diarizing…', summarizing: 'Writing the minutes…' };
+  const ACTIVE = ['uploaded', 'normalizing', 'transcribing', 'summarizing'];
+
+  function show(which) {
+    for (const k of Object.keys(cards)) cards[k].classList.toggle('hidden', k !== which);
+    if (which !== 'results') $('history').classList.remove('hidden');
+  }
+
+  // ---- upload ----
+  const dropzone = $('dropzone'), fileInput = $('file-input');
+  function setFile(f) {
+    file = f;
+    $('file-name').textContent = f.name;
+    $('file-size').textContent = `${fmtSize(f.size)} · ${f.type || 'audio'}`;
+    $('file-row').classList.remove('hidden');
+    $('file-row').classList.add('flex');
+  }
+  function clearFile() {
+    file = null; fileInput.value = '';
+    $('file-row').classList.add('hidden');
+    $('file-row').classList.remove('flex');
+  }
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault(); dropzone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) setFile(f);
+  });
+  fileInput.addEventListener('change', () => fileInput.files[0] && setFile(fileInput.files[0]));
+  $('btn-clear').addEventListener('click', clearFile);
+  $('btn-again').addEventListener('click', () => {
+    $('player').pause();
+    show('upload');
+    clearFile();
+    loadHistory();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  async function submitMeeting() {
+    if (!file) return;
+    cards.error.classList.add('hidden');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('roster', $('roster-input').value.trim());
+      fd.append('language', lang);
+      const res = await fetch('/api/meetings', { method: 'POST', body: fd });
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try { detail = (await res.json()).detail || detail; } catch {}
+        throw new Error(detail);
+      }
+      const { id } = await res.json();
+      clearFile();
+      watchMeeting(id);
+    } catch (err) {
+      show('upload');
+      cards.error.classList.remove('hidden');
+      $('error-msg').textContent = err.message;
+    }
+  }
+  $('btn-go').addEventListener('click', submitMeeting);
+
+  // ---- processing view driven by SSE ----
+  function resetProcessing() {
+    $('live-stages').innerHTML = '';
+    $('processing-label').textContent = 'Queued…';
+    document.querySelectorAll('#stage-timeline [data-stage]').forEach((el) => el.classList.remove('stage-done', 'stage-active'));
+  }
+  function paintTimeline(state) {
+    const order = ['normalize', 'transcribe', 'summarize'];
+    const activeIdx = { normalizing: 0, transcribing: 1, summarizing: 2, completed: 3, failed: -1 }[state] ?? -1;
+    document.querySelectorAll('#stage-timeline [data-stage]').forEach((el) => {
+      const i = order.indexOf(el.dataset.stage);
+      el.classList.toggle('stage-done', activeIdx > i);
+      el.classList.toggle('stage-active', activeIdx === i);
+    });
+  }
+
+  function watchMeeting(id) {
+    if (es) { es.close(); es = null; }
+    if (timer) clearInterval(timer);
+    resetProcessing();
+    show('processing');
+    const t0 = performance.now();
+    timer = setInterval(() => { $('elapsed').textContent = ((performance.now() - t0) / 1000).toFixed(1); }, 100);
+
+    let done = false;
+    const finish = () => { done = true; if (es) es.close(); es = null; clearInterval(timer); };
+
+    es = new EventSource(`/api/meetings/${id}/events`);
+    es.addEventListener('state', (e) => {
+      const { state } = JSON.parse(e.data);
+      paintTimeline(state);
+      if (STATE_LABELS[state]) $('processing-label').textContent = STATE_LABELS[state];
+    });
+    es.addEventListener('progress', (e) => {
+      const d = JSON.parse(e.data);
+      $('processing-label').textContent = d.message;
+    });
+    es.addEventListener('stage', (e) => {
+      const d = JSON.parse(e.data);
+      const row = document.createElement('li');
+      row.textContent = `${d.stage} — ${d.seconds.toFixed(1)}s · ${fmtCost(d.cost_usd)}${d.detail ? ' · ' + d.detail : ''}`;
+      $('live-stages').appendChild(row);
+    });
+    es.addEventListener('completed', () => { finish(); loadMeeting(id); });
+    es.addEventListener('error', (e) => {
+      // named SSE "error" event from the pipeline (has data), not the EventSource network error
+      if (!(e instanceof MessageEvent)) {
+        if (done) return; // server closed the stream after a terminal event
+        finish(); loadMeeting(id); // fall back to polling the record once
+        return;
+      }
+      const d = JSON.parse(e.data);
+      finish();
+      show('upload');
+      cards.error.classList.remove('hidden');
+      $('error-msg').textContent = d.message;
+      loadHistory();
+    });
+  }
+
+  // ---- results ----
+  const li = (text, dotClass='bg-white/25') =>
+    `<li class="flex gap-2.5"><span class="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}"></span><span>${esc(text)}</span></li>`;
+  const emptyLi = `<li class="text-[13px] text-dim">None captured.</li>`;
+
+  const SPEAKER_COLORS = ['text-[#8b93ff]','text-[#5fb2a1]','text-[#d2a85e]','text-[#c67ad2]','text-[#7ab8d2]','text-[#d27a7a]'];
+  const speakerColor = (name, map) => {
+    if (!(name in map)) map[name] = SPEAKER_COLORS[Object.keys(map).length % SPEAKER_COLORS.length];
+    return map[name];
+  };
+
+  async function loadMeeting(id) {
+    const res = await fetch(`/api/meetings/${id}`);
+    if (!res.ok) return;
+    const d = await res.json();
+    current = d;
+    if (ACTIVE.includes(d.meeting.state)) { watchMeeting(id); return; }
+    if (d.meeting.state === 'failed' && !d.summary) {
+      show('upload');
+      cards.error.classList.remove('hidden');
+      $('error-msg').textContent = d.meeting.error || 'processing failed';
+      loadHistory();
+      return;
+    }
+    renderResults(d);
+  }
+
+  function renderSummary(s) {
+    $('r-title').textContent = s.title;
+    $('r-tldr').textContent = s.tldr;
+    $('r-meta').textContent = `${s.model} · ${s.language === 'id' ? 'Bahasa Indonesia' : 'English'} · ${new Date(s.created_at).toLocaleString()}`;
+    $('r-version').textContent = `v${s.version}`;
+    $('r-repairs').classList.toggle('hidden', !s.repair_attempts);
+    if (s.repair_attempts) $('r-repairs').textContent = `${s.repair_attempts} schema repair${s.repair_attempts > 1 ? 's' : ''}`;
+    $('r-points').innerHTML = s.key_points?.length ? s.key_points.map((p) => li(p)).join('') : emptyLi;
+    $('r-decisions').innerHTML = s.decisions?.length ? s.decisions.map((p) => li(p, 'bg-accent')).join('') : emptyLi;
+    $('r-questions').innerHTML = s.open_questions?.length ? s.open_questions.map((p) => li(p)).join('') : emptyLi;
+    $('wrap-questions').style.display = s.open_questions?.length ? '' : 'none';
+    $('r-actions').innerHTML = s.action_items?.length ? s.action_items.map((a) => `
+      <li class="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-soft px-3.5 py-3">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 text-accent"><path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="min-w-0 flex-1 text-[13.5px] leading-snug text-hi/90">${esc(a.task)}</span>
+        <span class="rounded-full border border-line px-2 py-0.5 font-mono text-[11px] text-dim">${a.owner ? '@ ' + esc(a.owner) : '—'}</span>
+        ${a.due ? `<span class="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[11px] text-[#a5acff]">${esc(a.due)}</span>` : ''}
+      </li>`).join('') : emptyLi;
+    $('resum-lang').value = s.language;
+  }
+
+  function renderStages(stages) {
+    $('p-rows').innerHTML = (stages || []).map((s) => `
+      <tr class="border-b border-line/50">
+        <td class="py-2 pr-3">${esc(s.stage)}</td>
+        <td class="py-2 pr-3 text-dim">${esc(s.model || '—')}</td>
+        <td class="py-2 pr-3 text-right">${s.seconds.toFixed(1)}</td>
+        <td class="py-2 pr-3 text-right">${fmtInt(s.input_tokens)}</td>
+        <td class="py-2 pr-3 text-right">${fmtInt(s.output_tokens)}</td>
+        <td class="py-2 text-right">${fmtCost(s.cost_usd)}</td>
+      </tr>`).join('');
+    const known = (stages || []).filter((s) => s.cost_usd !== null && s.cost_usd !== undefined);
+    const total = known.reduce((acc, s) => acc + s.cost_usd, 0);
+    const unknown = (stages || []).length - known.length;
+    $('p-total').textContent = `total ${fmtCost(total)}${unknown ? ` + ${unknown} unpriced stage${unknown > 1 ? 's' : ''}` : ''}`;
+  }
+
+  function renderResults(d) {
+    if (!d.summary) return;
+    renderSummary(d.summary);
+    renderStages(d.stages);
+
+    const colorMap = {};
+    const utts = d.transcript?.utterances || [];
+    $('t-count').textContent = utts.length ? `(${utts.length} utterances)` : '';
+    $('r-transcript').innerHTML = utts.map((u) => `
+      <div class="flex gap-3">
+        <button class="ts-link mt-0.5 shrink-0 cursor-pointer font-mono text-[11px] text-dim transition" data-secs="${u.start}" title="Play from ${fmtTs(u.start)}">${fmtTs(u.start)}</button>
+        <div class="min-w-0">
+          <span class="font-mono text-[11px] font-medium ${speakerColor(u.speaker, colorMap)}">${esc(u.speaker)}</span>
+          <p class="mt-0.5 text-[13.5px] leading-relaxed text-hi/85">${esc(u.text)}</p>
+        </div>
+      </div>`).join('');
+
+    $('player').src = `/api/meetings/${d.meeting.id}/audio`;
+    $('player-card').classList.remove('hidden');
+
+    show('results');
+    $('history').classList.add('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  $('r-transcript').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-secs]');
+    if (!btn) return;
+    const player = $('player');
+    player.currentTime = Number(btn.dataset.secs);
+    player.play();
+    player.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // ---- re-summarize (pass 2) ----
+  $('btn-resum').addEventListener('click', async () => {
+    if (!current) return;
+    const btn = $('btn-resum');
+    btn.disabled = true; btn.textContent = 'Running…';
+    try {
+      const res = await fetch(`/api/meetings/${current.meeting.id}/summaries`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: $('resum-lang').value }),
+      });
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`;
+        try { detail = (await res.json()).detail || detail; } catch {}
+        throw new Error(detail);
+      }
+      await loadMeeting(current.meeting.id); // refetch: new summary version + new stage row
+    } catch (err) {
+      cards.error.classList.remove('hidden');
+      $('error-msg').textContent = err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Run';
+    }
+  });
+
+  // ---- export ----
+  const fmtAction = (a) => a.task + (a.owner ? ` (owner: ${a.owner})` : '') + (a.due ? ` — due ${a.due}` : '');
+  function toMarkdown(d) {
+    const s = d.summary;
+    const sec = (title, items, fmt = (x) => x) =>
+      items?.length ? `\n## ${title}\n${items.map((i) => `- ${fmt(i)}`).join('\n')}\n` : '';
+    return `# ${s.title}\n\n> ${s.tldr}\n` +
+      sec('Key points', s.key_points) +
+      sec('Decisions', s.decisions) +
+      sec('Action items', s.action_items, fmtAction) +
+      sec('Open questions', s.open_questions) +
+      `\n## Transcript\n${(d.transcript?.utterances || []).map((u) => `- **[${fmtTs(u.start)}] ${u.speaker}:** ${u.text}`).join('\n')}\n`;
+  }
+  function toWhatsApp(d) {
+    const s = d.summary;
+    const sec = (title, items, fmt = (x) => x) =>
+      items?.length ? `\n*${title}*\n${items.map((i) => `- ${fmt(i)}`).join('\n')}\n` : '';
+    return `*${s.title}*\n\n_${s.tldr}_\n` +
+      sec('Key points', s.key_points) +
+      sec('Decisions', s.decisions) +
+      sec('Action items', s.action_items, fmtAction) +
+      sec('Open questions', s.open_questions);
+  }
+  function bindCopy(btnId, serialize) {
+    const btn = $(btnId);
+    const label = btn.textContent;
+    btn.addEventListener('click', async () => {
+      if (!current || !current.summary) return;
+      await navigator.clipboard.writeText(serialize(current));
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => { btn.textContent = label; }, 1600);
+    });
+  }
+  bindCopy('btn-copy-md', toMarkdown);
+  bindCopy('btn-copy-wa', toWhatsApp);
+
+  // ---- meetings list (server is the source of truth) ----
+  const STATE_CHIP = {
+    completed: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
+    failed: 'border-red-400/30 bg-red-400/10 text-red-300',
+  };
+  async function loadHistory() {
+    try {
+      const res = await fetch('/api/meetings');
+      if (!res.ok) return;
+      const { meetings } = await res.json();
+      $('history').classList.toggle('hidden', meetings.length === 0);
+      $('history-list').innerHTML = meetings.map((m) => `
+        <li class="glass group flex cursor-pointer items-center gap-3 rounded-xl border border-line px-4 py-3 transition hover:border-white/20" data-id="${esc(m.id)}">
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-[13.5px] font-medium">${esc(m.filename)}</p>
+            <p class="mt-0.5 truncate text-[12px] text-dim">
+              ${new Date(m.created_at).toLocaleString()}
+              ${m.duration_seconds ? ' · ' + fmtTs(m.duration_seconds) : ''}
+              · ${m.language === 'id' ? 'Bahasa' : 'English'}
+              ${m.error ? ' · <span class="text-red-300/80">' + esc(m.error) + '</span>' : ''}
+            </p>
+          </div>
+          <span class="shrink-0 rounded-full border px-2 py-0.5 font-mono text-[10.5px] ${STATE_CHIP[m.state] || 'border-line bg-soft text-dim'}">${esc(m.state)}</span>
+        </li>`).join('');
+    } catch { /* server unreachable; leave list as-is */ }
+  }
+  $('history-list').addEventListener('click', (e) => {
+    const row = e.target.closest('[data-id]');
+    if (row) loadMeeting(row.dataset.id);
+  });
+  $('btn-history-refresh').addEventListener('click', loadHistory);
+
+  loadHistory();
+</script>
+</body>
+</html>
